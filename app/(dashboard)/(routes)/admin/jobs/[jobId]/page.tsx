@@ -1,12 +1,14 @@
+import { Banner } from "@/components/banner";
+import IconBadge from "@/components/icon-badge";
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { ArrowLeft, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { JobPublishAction } from "./_components/job-publish-actions";
-import { useEffect, useState } from "react";
-import { Banner } from "@/components/banner";
-import IconBadge from "@/components/icon-badge";
+import { TitleForm } from "./_components/title-form";
+import { CategoryForm } from "./_components/category-form";
+import { ImageForm } from "./_components/image-form";
 
 const JobDetailsPage = async ({ params }: { params: { jobId: string } }) => {
   // verify the mongodb ID
@@ -32,7 +34,16 @@ const JobDetailsPage = async ({ params }: { params: { jobId: string } }) => {
     return redirect("/admin/jobs");
   }
 
-  const requiredFields = [job.title, job.description, job.imageUrl];
+  const categories = await db.category.findMany({
+    orderBy: { name: "asc" },
+  });
+
+  const requiredFields = [
+    job.title,
+    job.description,
+    job.imageUrl,
+    job.categoryId,
+  ];
   const totalFields = requiredFields.length;
   const completedFields = requiredFields.filter(Boolean).length;
   const completionText = `(${completedFields}/${totalFields})`;
@@ -83,7 +94,20 @@ const JobDetailsPage = async ({ params }: { params: { jobId: string } }) => {
           </div>
 
           {/* title form */}
-          {/* <TitleForm initialData={job} jobId={job.id} /> */}
+          <TitleForm initialData={job} jobId={job.id} />
+
+          {/* category form */}
+          <CategoryForm
+            initialData={job}
+            jobId={job.id}
+            options={categories.map((category) => ({
+              label: category.name,
+              value: category.id,
+            }))}
+          />
+
+          {/* cover image form */}
+          <ImageForm initialData={job} jobId={job.id} />
         </div>
       </div>
     </div>
